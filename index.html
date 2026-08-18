@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="SCF">
-<meta name="theme-color" content="#0E0F0C">
+<meta name="theme-color" content="#F8F8F8">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
@@ -85,6 +85,7 @@
   }
   *{ box-sizing:border-box; min-width:0; overflow-wrap:break-word; }
   html,body{margin:0;padding:0;}
+  html{ background:#F8F8F8; }
   body{
     background: var(--bg);
     font-family:var(--font-body);
@@ -98,6 +99,12 @@
     -webkit-font-smoothing:antialiased;
     font-feature-settings:"calt";
   }
+  /* Toggled on <body> in JS to match whichever screen is showing (gate/setup vs
+     the logged-in app) — keeps the page's true background in sync with the visible
+     screen everywhere, not just inside .frame, so there's no color seam/gap on
+     any platform even if the viewport-height calc is ever a pixel off. */
+  body.on-gate{ background:#F8F8F8; }
+  body.on-gate .frame{ background:#F8F8F8; }
   .frame{
     width:100%;
     max-width:430px;
@@ -2291,11 +2298,24 @@ function render(){
   else if(state.screen==='setup') frame.innerHTML = renderSetup();
   else { frame.innerHTML = renderApp(); attachContentScrollListener(); }
   positionTabIndicator();
+  syncChromeColor();
   // Elements inserted via innerHTML don't reliably honor the bare `autoplay`
   // attribute in every browser engine — calling .play() explicitly is the
   // robust way to actually start a dynamically-inserted <video>.
   const heroVideo = frame.querySelector('.hero-video');
   if(heroVideo) heroVideo.play().catch(()=>{});
+}
+// Keeps the OS status bar / nav bar (via theme-color, which Android also applies
+// to the standalone-PWA nav bar) and the page's own background in sync with
+// whichever screen is showing — gate/setup use #F8F8F8 (matching the hero video's
+// baked-in background), the logged-in app uses the sage --bg. Toggling body's own
+// background (not just .frame's) means there's no color seam even if a platform's
+// viewport-height quirk ever leaves a sliver of body visible around .frame.
+function syncChromeColor(){
+  const onGate = state.screen === 'gate' || state.screen === 'setup';
+  document.body.classList.toggle('on-gate', onGate);
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if(meta) meta.setAttribute('content', onGate ? '#F8F8F8' : '#E8EBE6');
 }
 // Measures the active tab button's real position/width so the pill indicator can
 // slide to it precisely — a fixed 20%-per-tab split breaks the moment tab widths
