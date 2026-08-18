@@ -94,7 +94,7 @@
     justify-content:center;
     height:100vh;
     height:100dvh;
-    height:calc(var(--app-vh, 1vh) * 100);
+    height:100svh;
     overflow:hidden;
     -webkit-font-smoothing:antialiased;
     font-feature-settings:"calt";
@@ -110,7 +110,7 @@
     max-width:430px;
     height:100vh;
     height:100dvh;
-    height:calc(var(--app-vh, 1vh) * 100);
+    height:100svh;
     background: var(--mesh-bg);
     box-shadow: var(--shadow-lg);
     display:flex;
@@ -123,17 +123,7 @@
   /* ---------- GATE / SETUP ---------- */
   /* Matches the globe video's own baked-in background (sampled ~#F8F8F8) so the
      video's edges disappear into the page instead of reading as a white box. */
-  /* max() guarantees real clearance from the status bar even on devices/browsers
-     that report env(safe-area-inset-top) as 0 despite having a real status bar —
-     safe-area-inset only reliably covers iOS notches, not Android status bars. */
-  .gate{
-    flex:1; min-height:0; overflow-y:auto; display:flex; flex-direction:column; justify-content:center;
-    padding-top: max(44px, calc(env(safe-area-inset-top, 0px) + 20px));
-    padding-right: 28px;
-    padding-bottom: max(36px, calc(env(safe-area-inset-bottom, 0px) + 20px));
-    padding-left: 28px;
-    background: #F8F8F8;
-  }
+  .gate{ flex:1; min-height:0; overflow-y:auto; display:flex; flex-direction:column; justify-content:center; padding: calc(28px + env(safe-area-inset-top, 0px)) 28px calc(36px + env(safe-area-inset-bottom, 0px)); background: #F8F8F8; }
 
   /* ---------- GATE WELCOME: orbiting-coin hero ---------- */
   @keyframes orbit{ from{ transform:rotate(0deg); } to{ transform:rotate(360deg); } }
@@ -196,8 +186,7 @@
   /* ---------- APP SHELL ---------- */
   .app{ flex:1; min-height:0; display:flex; flex-direction:column; }
   .topbar{
-    flex:none; padding-top: max(46px, calc(env(safe-area-inset-top, 0px) + 12px)); padding-right:20px; padding-bottom:14px; padding-left:20px;
-    display:flex; align-items:center; justify-content:space-between; gap:10px;
+    flex:none; padding: calc(12px + env(safe-area-inset-top, 0px)) 20px 14px; display:flex; align-items:center; justify-content:space-between; gap:10px;
     background:var(--glass-bg-strong); border-bottom:1px solid var(--glass-border); position:relative; z-index:20; transition: box-shadow .2s ease, background-color .2s ease;
     backdrop-filter:var(--glass-blur); -webkit-backdrop-filter:var(--glass-blur);
   }
@@ -356,31 +345,6 @@
 <div class="frame" id="frame"></div>
 
 <script>
-/* ============================= VIEWPORT HEIGHT ============================= */
-// CSS's own viewport-height units (vh/dvh/svh) turned out inconsistent in
-// practice across this app's real contexts (regular tab vs. installed
-// standalone PWA, with/without on-screen gesture nav) — svh under-shot the
-// true visible height on some Android devices (leaving a gap below the tab
-// bar), while dvh over-shot on others (clipping the tab bar). Measuring the
-// viewport directly in JS and feeding it back in as a CSS custom property is
-// the one approach that tracks the *actual* rendered viewport in every
-// context, same trick used to solve mobile Safari's original 100vh bug.
-//
-// Prefer visualViewport.height over window.innerHeight: innerHeight is NOT
-// keyboard-aware (it stays at the full device height even once the on-screen
-// keyboard covers the bottom half), which left a dead gap between the app's
-// content and the keyboard. visualViewport.height shrinks correctly when the
-// keyboard opens, so the frame resizes to fit the space actually visible
-// above it instead of floating content over a gap.
-function setAppVH(){
-  const h = (window.visualViewport && window.visualViewport.height) || window.innerHeight;
-  document.documentElement.style.setProperty('--app-vh', (h * 0.01) + 'px');
-}
-setAppVH();
-window.addEventListener('resize', setAppVH);
-window.addEventListener('orientationchange', setAppVH);
-if(window.visualViewport) window.visualViewport.addEventListener('resize', setAppVH);
-
 /* ============================= CONSTANTS ============================= */
 const CATEGORIES = [
   {id:'food', label:'Food & Groceries', icon:'🍽️'},
