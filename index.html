@@ -18,7 +18,6 @@
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
-<script src="https://unpkg.com/lucide@0.451.0"></script>
 <style>
   :root{
     /* Wise-inspired brand + semantic palette (see github.md / design project e4eac0b4). */
@@ -102,7 +101,6 @@
   }
   h1,h2,h3,.display{ font-family:var(--font-display); font-weight:900; letter-spacing:-0.02em; text-wrap:balance; }
   .mono{ font-family:var(--font-display); font-weight:600; font-variant-numeric: tabular-nums; }
-  i[data-lucide]{ display:inline-block; vertical-align:-3px; }
   /* ---------- GATE / SETUP ---------- */
   /* Matches the globe video's own baked-in background (sampled ~#F8F8F8) so the
      video's edges disappear into the page instead of reading as a white box. */
@@ -243,7 +241,7 @@
   .tab-indicator .pill{ width:44px; height:44px; border-radius:999px; background:var(--green-pale); }
   .tab{ position:relative; flex:1; display:flex; flex-direction:column; align-items:center; gap:3px; background:none; border:none; cursor:pointer; color:var(--mute); padding:6px 2px; z-index:1; }
   .tab.active{ color:var(--ink); font-weight:600; }
-  .tab .ic{ display:flex; }
+  .tab .ic{ display:flex; font-size:19px; }
   .tab .lb{ font-size:10.5px; font-weight:600; }
 
   .fab{ position:absolute; right:20px; bottom:96px; width:54px; height:54px; border-radius:999px; background:var(--green); border:none; box-shadow:var(--shadow-md); font-size:26px; color:var(--on-green); cursor:pointer; z-index:15; transition:background 120ms var(--ease-standard), transform 120ms var(--ease-standard); }
@@ -261,7 +259,7 @@
   /* Per-child staggered entrance. render() does a full innerHTML replace on every
      tab/screen switch, so these are always fresh elements — the animation replays
      automatically whenever .enter is present at creation time, no JS retrigger needed. */
-  .content.enter > *{ animation: staggerUp 420ms cubic-bezier(.2,0,.2,1) both; }
+  .content.enter > *{ animation: heroIn 420ms cubic-bezier(.2,0,.2,1) both; }
   .content.enter > *:nth-child(1){ animation-delay: 0ms; }
   .content.enter > *:nth-child(2){ animation-delay: 50ms; }
   .content.enter > *:nth-child(3){ animation-delay: 100ms; }
@@ -290,6 +288,7 @@
     background:var(--canvas-soft);
   }
   .empty .em-ic-ring{ display:flex; align-items:center; justify-content:center; margin:0 auto 14px; color:var(--mute); }
+  .empty .em-ic{ font-size:26px; }
   .empty p{ font-size:13.5px; margin:0; line-height:1.5; max-width:260px; margin-left:auto; margin-right:auto; }
 
   .protect-list{ list-style:none; padding:0; margin:0; }
@@ -323,25 +322,21 @@
 <script>
 /* ============================= CONSTANTS ============================= */
 const CATEGORIES = [
-  {id:'food', label:'Food & Groceries', icon:'utensils'},
-  {id:'transport', label:'Transportation', icon:'car'},
-  {id:'housing', label:'Housing & Rent', icon:'home'},
-  {id:'utilities', label:'Utilities', icon:'zap'},
-  {id:'remittance', label:'Padala / Remittance', icon:'send'},
-  {id:'savings', label:'Savings', icon:'piggy-bank'},
-  {id:'health', label:'Healthcare', icon:'heart-pulse'},
-  {id:'education', label:'Education', icon:'graduation-cap'},
-  {id:'entertainment', label:'Entertainment', icon:'clapperboard'},
-  {id:'debt', label:'Debt Payment', icon:'credit-card'},
-  {id:'insurance', label:'Insurance', icon:'shield'},
-  {id:'other', label:'Other', icon:'package'}
+  {id:'food', label:'Food & Groceries', icon:'🍽️'},
+  {id:'transport', label:'Transportation', icon:'🚗'},
+  {id:'housing', label:'Housing & Rent', icon:'🏠'},
+  {id:'utilities', label:'Utilities', icon:'💡'},
+  {id:'remittance', label:'Padala / Remittance', icon:'📨'},
+  {id:'savings', label:'Savings', icon:'💰'},
+  {id:'health', label:'Healthcare', icon:'🏥'},
+  {id:'education', label:'Education', icon:'🎓'},
+  {id:'entertainment', label:'Entertainment', icon:'🎬'},
+  {id:'debt', label:'Debt Payment', icon:'💳'},
+  {id:'insurance', label:'Insurance', icon:'🛡️'},
+  {id:'other', label:'Other', icon:'📦'}
 ];
 const CURRENCIES = ['PHP','USD','SGD','AED','SAR','QAR','KWD','BHD','OMR','HKD','JPY','GBP','EUR','CAD','AUD','NZD','KRW','TWD','MYR','THB','CNY','ILS'];
 const SYMBOLS = {PHP:'₱',USD:'$',SGD:'S$',AED:'د.إ',SAR:'﷼',QAR:'ر.ق',KWD:'د.ك',BHD:'.د.ب',OMR:'ر.ع.',HKD:'HK$',JPY:'¥',GBP:'£',EUR:'€',CAD:'C$',AUD:'A$',NZD:'NZ$',KRW:'₩',TWD:'NT$',MYR:'RM',THB:'฿',CNY:'¥',ILS:'₪'};
-// Wraps a lucide icon name as inline markup; lucide.createIcons() (called at the
-// end of render()) hydrates every <i data-lucide> left in the DOM after each render.
-function ic(name, size){ return '<i data-lucide="'+name+'" style="width:'+(size||18)+'px;height:'+(size||18)+'px;"></i>'; }
-
 /* ============================= STATE ============================= */
 /* ============================= TOASTS & CONFIRM ============================= */
 // These live outside the normal render() cycle (appended straight to document.body)
@@ -408,12 +403,11 @@ function showCelebration(message){
   }).join('');
   overlay.innerHTML = `
     ${pieces}
-    <div class="celebrate-check">${ic('check',34)}</div>
+    <div class="celebrate-check">✅</div>
     <h1 class="celebrate-title">Goal reached.</h1>
     <p class="celebrate-sub">${message}</p>
     <button class="btn" id="celebrateDoneBtn">Done</button>`;
   document.body.appendChild(overlay);
-  if(window.lucide) window.lucide.createIcons();
   overlay.querySelector('#celebrateDoneBtn').onclick = ()=>overlay.remove();
 }
 // Named wrappers for destructive actions. Building the confirm message as an
@@ -960,15 +954,17 @@ function renderGate(){
   const isLogin = state.gateMode === 'login';
   return `
   <div class="gate">
-    <a class="linklike" style="font-size:13px; margin-bottom:18px; display:inline-block;" onclick="setGateMode(null)">← Back</a>
-    <h1>${isLogin ? 'Log in' : 'Start a new household'}</h1>
-    <p class="sub">${isLogin
+    <a class="linklike" style="font-size:13px; margin-bottom:18px; display:inline-block; animation:heroIn 700ms cubic-bezier(.2,0,.2,1) both;" onclick="setGateMode(null)">← Back</a>
+    <h1 style="animation:heroIn 700ms cubic-bezier(.2,0,.2,1) 60ms both;">${isLogin ? 'Log in' : 'Start a new household'}</h1>
+    <p class="sub" style="animation:heroIn 700ms cubic-bezier(.2,0,.2,1) 120ms both;">${isLogin
       ? 'Enter the exact household code the two of you already agreed on.'
       : 'Choose a private code only the two of you will use. Make it something not easy to guess — this is what keeps your data private.'}</p>
-    <label>Household code</label>
-    <input type="text" id="codeInput" placeholder="e.g. narra-Tambayan-58" autocomplete="off" />
-    <p class="hint">Case-sensitive — "Narra58" and "narra58" count as different codes, so type it exactly the same way every time.</p>
-    <button class="btn" onclick="handleGateSubmit(this)">${isLogin ? 'Log in' : 'Create household'}</button>
+    <div style="animation:heroIn 700ms cubic-bezier(.2,0,.2,1) 180ms both;">
+      <label>Household code</label>
+      <input type="text" id="codeInput" placeholder="e.g. narra-Tambayan-58" autocomplete="off" />
+      <p class="hint">Case-sensitive — "Narra58" and "narra58" count as different codes, so type it exactly the same way every time.</p>
+    </div>
+    <button class="btn" style="animation:heroIn 700ms cubic-bezier(.2,0,.2,1) 240ms both;" onclick="handleGateSubmit(this)">${isLogin ? 'Log in' : 'Create household'}</button>
   </div>`;
 }
 function setGateMode(mode){ state.gateMode = mode; render(); }
@@ -1010,15 +1006,17 @@ async function handleGateSubmit(btn){
 function renderSetup(){
   return `
   <div class="gate">
-    <h1>Set up your space</h1>
-    <p class="sub">Quick one-time setup for "${state.code}". You can change all of this later in Settings.</p>
-    <div class="row">
+    <h1 style="animation:heroIn 700ms cubic-bezier(.2,0,.2,1) both;">Set up your space</h1>
+    <p class="sub" style="animation:heroIn 700ms cubic-bezier(.2,0,.2,1) 60ms both;">Quick one-time setup for "${state.code}". You can change all of this later in Settings.</p>
+    <div class="row" style="animation:heroIn 700ms cubic-bezier(.2,0,.2,1) 120ms both;">
       <div><label>Your name</label><input type="text" id="setupA" placeholder="e.g. Ana" /></div>
       <div><label>Partner's name</label><input type="text" id="setupB" placeholder="e.g. Ben" /></div>
     </div>
-    <label>Home currency (for shared totals & goals)</label>
-    <select id="setupBase">${CURRENCIES.map(c=>`<option value="${c}">${c} — ${SYMBOLS[c]}</option>`).join('')}</select>
-    <button class="btn" onclick="handleSetupSubmit(this)">Create our space</button>
+    <div style="animation:heroIn 700ms cubic-bezier(.2,0,.2,1) 180ms both;">
+      <label>Home currency (for shared totals & goals)</label>
+      <select id="setupBase">${CURRENCIES.map(c=>`<option value="${c}">${c} — ${SYMBOLS[c]}</option>`).join('')}</select>
+    </div>
+    <button class="btn" style="animation:heroIn 700ms cubic-bezier(.2,0,.2,1) 240ms both;" onclick="handleSetupSubmit(this)">Create our space</button>
   </div>`;
 }
 async function handleSetupSubmit(btn){
@@ -1043,11 +1041,11 @@ async function handleSetupSubmit(btn){
 /* ============================= RENDER: APP SHELL ============================= */
 function renderApp(){
   const tabs = [
-    {id:'dashboard', ic:'home', lb:'Home'},
-    {id:'transactions', ic:'receipt', lb:'Activity'},
-    {id:'goals', ic:'target', lb:'Goals'},
-    {id:'budget', ic:'wallet', lb:'Budget'},
-    {id:'settings', ic:'settings', lb:'Settings'}
+    {id:'dashboard', ic:'🏡', lb:'Home'},
+    {id:'transactions', ic:'🧾', lb:'Activity'},
+    {id:'goals', ic:'🎯', lb:'Goals'},
+    {id:'budget', ic:'📊', lb:'Budget'},
+    {id:'settings', ic:'⚙️', lb:'Settings'}
   ];
   const entranceClass = state.animateContent ? ' enter' : '';
   state.animateContent = false;
@@ -1061,7 +1059,7 @@ function renderApp(){
     ${(state.tab==='transactions'||state.tab==='goals'||state.tab==='budget') ? `<button class="fab" onclick="openModal('${fabType()}')" aria-label="Add ${fabType()==='txn'?'transaction':fabType()}">+</button>` : ''}
     <nav class="tabbar" aria-label="Main">
       <div class="tab-indicator" id="tabIndicator"><div class="pill"></div></div>
-      ${tabs.map(t=>`<button class="tab ${state.tab===t.id?'active':''}" onclick="switchTab('${t.id}')" ${state.tab===t.id?'aria-current="page"':''}><span class="ic">${ic(t.ic,20)}</span><span class="lb">${t.lb}</span></button>`).join('')}
+      ${tabs.map(t=>`<button class="tab ${state.tab===t.id?'active':''}" onclick="switchTab('${t.id}')" ${state.tab===t.id?'aria-current="page"':''}><span class="ic">${t.ic}</span><span class="lb">${t.lb}</span></button>`).join('')}
     </nav>
   </div>
   ${state.modal ? renderModal() : ''}
@@ -1105,7 +1103,7 @@ function renderDashboard(){
 
   return `
     <div class="pull-indicator" style="height:${state.pull.dist}px; animation:none; display:flex; align-items:center; justify-content:center; overflow:hidden; transition:height 200ms cubic-bezier(.2,0,.2,1);">
-      <span style="display:inline-flex; transform:rotate(${state.pull.refreshing?0:Math.min(360,state.pull.dist*4)}deg); animation:${state.pull.refreshing?'pullSpin 700ms linear infinite':'none'}; color:var(--ink);">${ic('refresh-cw',18)}</span>
+      <span style="display:inline-flex; transform:rotate(${state.pull.refreshing?0:Math.min(360,state.pull.dist*4)}deg); animation:${state.pull.refreshing?'pullSpin 700ms linear infinite':'none'}; color:var(--ink);">🔄</span>
     </div>
     <div class="balance-hero">
       <div class="lbl">This month, together</div>
@@ -1113,10 +1111,10 @@ function renderDashboard(){
       <div class="sub">${fmt(totals.income,s.baseCurrency)} in · ${fmt(totals.expense,s.baseCurrency)} out</div>
     </div>
     ${balanceLine ? `<div class="card tint-gold" style="margin-bottom:18px; display:flex; align-items:center; gap:10px;">
-      ${ic('scale',16)}<div style="font-size:13px; font-weight:600;">${balanceLine}</div>
+      <div style="font-size:13px; font-weight:600;">⚖️ ${balanceLine}</div>
     </div>` : ''}
     ${totalSavings>0.5 ? `<div class="card tint-teal" style="margin-bottom:18px;">
-      <div style="font-size:13px; font-weight:600; display:flex; align-items:center; gap:8px;">${ic('piggy-bank',16)}${fmt(totalSavings, s.baseCurrency)} saved so far, together</div>
+      <div style="font-size:13px; font-weight:600;">💰 ${fmt(totalSavings, s.baseCurrency)} saved so far, together</div>
       <div style="font-size:11.5px; color:var(--body); margin-top:2px;">All income minus all expenses, across everything you've logged. You can start a goal from this total.</div>
       ${renderConvertedSavings(totalSavings)}
     </div>` : ''}
@@ -1137,14 +1135,14 @@ function renderDashboard(){
     ${topGoals.length ? `<div class="section-label">Goals</div>${topGoals.map(g=>renderGoalCard(g)).join('')}` : ''}
 
     <div class="section-label">Recent activity</div>
-    ${recent.length ? `<div class="card">${recent.map(t=>renderTxnRow(t)).join('')}</div>` : renderEmpty('receipt','No activity yet — add your first expense or income above.')}
+    ${recent.length ? `<div class="card">${recent.map(t=>renderTxnRow(t)).join('')}</div>` : renderEmpty('🧾','No activity yet — add your first expense or income above.')}
   `;
 }
 
 function renderRateWidget(){
   const s = state.data.settings;
   if(state.ratesLoading) return `<div class="card"><div class="r-row"><span>Fetching latest rates…</span></div></div>`;
-  if(!state.rates) return `<div class="card"><div class="r-row"><span>Rates unavailable.</span><button class="refresh-btn" onclick="fetchRates()">${ic('refresh-cw',12)}Retry</button></div></div>`;
+  if(!state.rates) return `<div class="card"><div class="r-row"><span>Rates unavailable.</span><button class="refresh-btn" onclick="fetchRates()">Retry</button></div></div>`;
   const rows = s.currencies.filter(c=>c!==s.baseCurrency).map(c=>{
     const rate = convert(1, c, s.baseCurrency);
     return `<div class="r-row"><span>1 ${c} =</span><span class="mono">${rate!==null? fmt(rate,s.baseCurrency): '—'}</span></div>`;
@@ -1153,7 +1151,7 @@ function renderRateWidget(){
   return `<div class="card"><div class="rate-list">${rows || '<div class=\\"r-row\\"><span>Add a foreign currency in Settings to see it here.</span></div>'}</div>
     <div style="display:flex; justify-content:space-between; margin-top:10px; padding-top:10px; border-top:1px solid var(--line);">
       <span style="font-size:11px; color:var(--ink-soft);">Updated ${updated}</span>
-      <button class="refresh-btn" onclick="fetchRates()">${ic('refresh-cw',12)}Refresh</button>
+      <button class="refresh-btn" onclick="fetchRates()">Refresh</button>
     </div></div>`;
 }
 function renderConvertedSavings(totalSavings){
@@ -1201,7 +1199,7 @@ function computeNetWorthSeries(){
 function renderNetWorthCard(){
   const s = state.data.settings;
   if(!state.data.transactions.length){
-    return `<div class="card" style="margin-bottom:18px;">${renderEmpty('trending-up','Once you log some income and expenses, your net worth trend will show up here.')}</div>`;
+    return `<div class="card" style="margin-bottom:18px;">${renderEmpty('📈','Once you log some income and expenses, your net worth trend will show up here.')}</div>`;
   }
   const series = computeNetWorthSeries();
   const values = series.map(p=>p.value);
@@ -1234,7 +1232,7 @@ function renderNetWorthCard(){
         <div class="mono" style="font-size:23px; font-weight:600;">${fmt(last, s.baseCurrency)}</div>
       </div>
       <div style="text-align:right; font-size:12.5px; font-weight:700; color:${trendUp?'var(--positive-deep)':'var(--negative)'}; flex-shrink:0;">
-        ${ic(trendUp?'trending-up':'trending-down',14)} ${fmt(Math.abs(delta), s.baseCurrency)}
+        ${trendUp?'▲':'▼'} ${fmt(Math.abs(delta), s.baseCurrency)}
         <div style="font-size:10.5px; color:var(--mute); font-weight:500;">since ${firstLabel}</div>
       </div>
     </div>
@@ -1496,7 +1494,7 @@ async function generatePdfReport(btn){
 }
 
 function renderEmpty(icon, text){
-  return `<div class="empty"><div class="em-ic-ring">${ic(icon,40)}</div><p>${text}</p></div>`;
+  return `<div class="empty"><div class="em-ic-ring"><div class="em-ic">${icon}</div></div><p>${text}</p></div>`;
 }
 
 /* ---------- Transactions ---------- */
@@ -1507,7 +1505,7 @@ function renderTxnRow(t){
   const paidByName = t.paidBy==='A'? s.partnerA : t.paidBy==='B'? s.partnerB : 'Joint';
   return `
     <div class="txn-row">
-      <div class="txn-icon ${t.type==='income'?'income':''}">${ic(cat?cat.icon:'package',18)}</div>
+      <div class="txn-icon ${t.type==='income'?'income':''}">${cat?cat.icon:'📦'}</div>
       <div class="txn-main">
         <div class="top">
           <div class="cat">${cat?cat.label:t.category}</div>
@@ -1555,7 +1553,7 @@ function renderTxnResultsContent(){
     list = transactionsForMonth(state.viewMonth.year, state.viewMonth.month);
   }
   if(!list.length){
-    return headerNote + renderEmpty('receipt', query ? 'No transactions match that search.' : 'Nothing logged for this month yet.');
+    return headerNote + renderEmpty('🧾', query ? 'No transactions match that search.' : 'Nothing logged for this month yet.');
   }
   const s = state.data.settings;
   let totalIncome=0, totalExpense=0;
@@ -1567,7 +1565,6 @@ function handleTxnSearchInput(val){
   state.txnSearch = val;
   document.getElementById('txnResultsContainer').innerHTML = renderTxnResultsContent();
   document.getElementById('monthNavContainer').style.display = val.trim() ? 'none' : 'flex';
-  if(window.lucide) window.lucide.createIcons();
 }
 function transactionsForMonth(year, month){
   return state.data.transactions.filter(t=>{
@@ -1641,7 +1638,7 @@ function renderGoalCard(g){
       <h3>${g.title}</h3>
       <div class="meta">${fmt(p.current,g.currency)} of ${fmt(g.targetAmount,g.currency)} · by ${g.deadline}</div>
       <div class="meta">Started ${startedLabel}</div>
-      ${g.fundingMode==='linked' ? `<div class="meta" style="color:var(--positive-deep);">${ic('refresh-cw',12)} Auto-synced with your total savings</div>` : (g.allocatedFromPool>0 ? `<div class="meta" style="color:var(--positive-deep);">${ic('piggy-bank',12)} Started from your saved total (${fmt(g.allocatedFromPool, g.currency)})</div>` : '')}
+      ${g.fundingMode==='linked' ? `<div class="meta" style="color:var(--positive-deep);">🔄 Auto-synced with your total savings</div>` : (g.allocatedFromPool>0 ? `<div class="meta" style="color:var(--positive-deep);">💰 Started from your saved total (${fmt(g.allocatedFromPool, g.currency)})</div>` : '')}
       <div class="goal-pct ${p.behind?'behind':''}">${p.behind? 'Behind pace': 'On track'} · ${p.timePct.toFixed(0)}% of time elapsed</div>
       <div style="display:flex; gap:8px; margin-top:8px; flex-wrap:wrap;">
         ${g.fundingMode==='linked' ? '' : `<button class="btn small" onclick="openModal('goal-contrib',{id:'${g.id}'})">Add funds</button>`}
@@ -1653,7 +1650,7 @@ function renderGoalCard(g){
 }
 function renderGoals(){
   const goals = state.data.goals;
-  if(!goals.length) return renderEmpty('target','No goals yet. Tap + to set your first SMART goal — a house downpayment, an emergency fund, a trip home.');
+  if(!goals.length) return renderEmpty('🎯','No goals yet. Tap + to set your first SMART goal — a house downpayment, an emergency fund, a trip home.');
   return goals.map(g=>renderGoalCard(g)).join('');
 }
 
@@ -1671,7 +1668,7 @@ function renderBudget(){
     </div>`;
 
   const budgetSection = !budgets.length
-    ? renderEmpty('bar-chart-3','No budget categories yet. Tap + to set a joint monthly limit for something like Food or Padala.')
+    ? renderEmpty('📊','No budget categories yet. Tap + to set a joint monthly limit for something like Food or Padala.')
     : `<div class="card">${budgets.map(b=>{
         const cat = CATEGORIES.find(c=>c.id===b.category);
         const spent = spentInCategory(b.category, year, month);
@@ -1681,7 +1678,7 @@ function renderBudget(){
         return `
         <div class="budget-item">
           <div class="head">
-            <span class="cat">${ic(cat?cat.icon:'package',15)} ${cat?cat.label:b.category}</span>
+            <span class="cat">${cat?cat.icon:'📦'} ${cat?cat.label:b.category}</span>
             <span class="mono">${fmt(spent,s.baseCurrency)} / ${fmt(limitBase,s.baseCurrency)}</span>
           </div>
           <div class="bar-track"><div class="bar-fill ${cls}" style="transform:scaleX(${(pct/100).toFixed(4)});"></div></div>
@@ -1708,14 +1705,14 @@ function computeCategoryBreakdown(year, month){
 function renderCategoryBreakdown(year, month){
   const {totals, grandTotal, baseCurrency} = computeCategoryBreakdown(year, month);
   const entries = Object.entries(totals).sort((a,b)=>b[1]-a[1]);
-  if(!entries.length) return renderEmpty('bar-chart-3','No expenses logged this month yet.');
+  if(!entries.length) return renderEmpty('📊','No expenses logged this month yet.');
   return `<div class="card">${entries.map(([catId, amt])=>{
     const cat = CATEGORIES.find(c=>c.id===catId);
     const pct = grandTotal>0 ? (amt/grandTotal*100) : 0;
     return `
     <div class="budget-item">
       <div class="head">
-        <span class="cat">${ic(cat?cat.icon:'package',15)} ${cat?cat.label:catId}</span>
+        <span class="cat">${cat?cat.icon:'📦'} ${cat?cat.label:catId}</span>
         <span class="mono">${fmt(amt, baseCurrency)} · ${pct.toFixed(0)}%</span>
       </div>
       <div class="bar-track"><div class="bar-fill" style="transform:scaleX(${(pct/100).toFixed(4)});"></div></div>
@@ -1730,7 +1727,7 @@ function renderRecurringRow(r){
   const freqLabel = {weekly:'Weekly', monthly:'Monthly', quarterly:'Quarterly', yearly:'Yearly'}[r.frequency] || r.frequency;
   return `
     <div class="txn-row">
-      <div class="txn-icon ${r.type==='income'?'income':''}">${ic(cat?cat.icon:'package',18)}</div>
+      <div class="txn-icon ${r.type==='income'?'income':''}">${cat?cat.icon:'📦'}</div>
       <div class="txn-main">
         <div class="top">
           <div class="cat">${cat?cat.label:r.category}</div>
@@ -1761,7 +1758,7 @@ function renderRecurringEditModal(id){
         <select id="editRecCurrency">${s.currencies.map(c=>`<option value="${c}" ${c===r.currency?'selected':''}>${c}</option>`).join('')}</select>
       </div>
       <label>Category</label>
-      <select id="editRecCategory">${CATEGORIES.map(c=>`<option value="${c.id}" ${c.id===r.category?'selected':''}>${c.label}</option>`).join('')}</select>
+      <select id="editRecCategory">${CATEGORIES.map(c=>`<option value="${c.id}" ${c.id===r.category?'selected':''}>${c.icon} ${c.label}</option>`).join('')}</select>
       <label>How often</label>
       <select id="editRecFrequency">
         <option value="weekly" ${r.frequency==='weekly'?'selected':''}>Weekly</option>
@@ -1864,11 +1861,11 @@ function renderSettings(){
     <div class="section-label">Data & protection</div>
     <div class="card">
       <ul class="protect-list">
-        <li><span class="ic">${ic('key-round',16)}</span><span>No password — access is by shared household code only (<b>${state.code}</b>). Anyone who knows this exact code, and has this app's link, can view and edit your data. Keep the code and link between the two of you.</span></li>
-        <li><span class="ic">${ic('cloud',16)}</span><span>Data lives in a private Firebase database, scoped to this household code. It updates live on both your phones — no manual refresh needed.</span></li>
-        <li><span class="ic">${ic('ban',16)}</span><span>There's no bank connection and nothing is sent to a third party — every number here is what you type in.</span></li>
-        <li><span class="ic">${ic('bell-off',16)}</span><span>Alerts appear when either of you opens the app — this is not a push-notification system, so nothing pings your phone in the background.</span></li>
-        <li><span class="ic">${ic('refresh-cw',16)}</span><span>Rates refresh from a public exchange-rate feed (daily reference rates, not live tick-by-tick trading rates).</span></li>
+        <li><span class="ic">🔑</span><span>No password — access is by shared household code only (<b>${state.code}</b>). Anyone who knows this exact code, and has this app's link, can view and edit your data. Keep the code and link between the two of you.</span></li>
+        <li><span class="ic">☁️</span><span>Data lives in a private Firebase database, scoped to this household code. It updates live on both your phones — no manual refresh needed.</span></li>
+        <li><span class="ic">🚫</span><span>There's no bank connection and nothing is sent to a third party — every number here is what you type in.</span></li>
+        <li><span class="ic">📵</span><span>Alerts appear when either of you opens the app — this is not a push-notification system, so nothing pings your phone in the background.</span></li>
+        <li><span class="ic">🔄</span><span>Rates refresh from a public exchange-rate feed (daily reference rates, not live tick-by-tick trading rates).</span></li>
       </ul>
     </div>
 
@@ -1937,7 +1934,7 @@ function renderTxnModal(payload){
       </div>
       <div class="inline-convert" id="inlineConvert"></div>
       <label>Category</label>
-      <select id="txnCategory">${CATEGORIES.map(c=>`<option value="${c.id}">${c.label}</option>`).join('')}</select>
+      <select id="txnCategory">${CATEGORIES.map(c=>`<option value="${c.id}">${c.icon} ${c.label}</option>`).join('')}</select>
       <label>Date</label>
       <input type="date" id="txnDate" value="${new Date().toISOString().slice(0,10)}" />
       ${type==='expense' ? `
@@ -2027,7 +2024,7 @@ function renderTxnEditModal(txnId){
         <select id="editTxnCurrency">${s.currencies.map(c=>`<option value="${c}" ${c===t.currency?'selected':''}>${c}</option>`).join('')}</select>
       </div>
       <label>Category</label>
-      <select id="editTxnCategory">${CATEGORIES.map(c=>`<option value="${c.id}" ${c.id===t.category?'selected':''}>${c.label}</option>`).join('')}</select>
+      <select id="editTxnCategory">${CATEGORIES.map(c=>`<option value="${c.id}" ${c.id===t.category?'selected':''}>${c.icon} ${c.label}</option>`).join('')}</select>
       <label>Date</label>
       <input type="date" id="editTxnDate" value="${new Date(t.date).toISOString().slice(0,10)}" />
       ${t.type==='expense' ? `
@@ -2258,7 +2255,7 @@ function renderBudgetModal(){
       <button class="modal-close" onclick="closeModal()">✕</button>
       <h2>Set a joint budget</h2>
       <label>Category</label>
-      <select id="budgetCategory">${CATEGORIES.map(c=>`<option value="${c.id}">${c.label}</option>`).join('')}</select>
+      <select id="budgetCategory">${CATEGORIES.map(c=>`<option value="${c.id}">${c.icon} ${c.label}</option>`).join('')}</select>
       <label>Monthly limit</label>
       <div class="row">
         <input type="number" id="budgetLimit" placeholder="0.00" />
@@ -2275,7 +2272,6 @@ function render(){
   if(state.screen==='gate') frame.innerHTML = renderGate();
   else if(state.screen==='setup') frame.innerHTML = renderSetup();
   else { frame.innerHTML = renderApp(); attachContentScrollListener(); }
-  if(window.lucide) window.lucide.createIcons();
   positionTabIndicator();
   // Elements inserted via innerHTML don't reliably honor the bare `autoplay`
   // attribute in every browser engine — calling .play() explicitly is the
