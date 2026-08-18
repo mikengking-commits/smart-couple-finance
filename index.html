@@ -2,13 +2,13 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Smart Couple Financial</title>
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="icon" href="icon-192.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="SCF">
 <meta name="theme-color" content="#F8F8F8">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -123,14 +123,14 @@
   /* ---------- GATE / SETUP ---------- */
   /* Matches the globe video's own baked-in background (sampled ~#F8F8F8) so the
      video's edges disappear into the page instead of reading as a white box. */
-  /* max() guarantees real clearance from the status bar even on devices/browsers
-     that report env(safe-area-inset-top) as 0 despite having a real status bar —
-     safe-area-inset only reliably covers iOS notches, not Android status bars. */
+  /* No viewport-fit=cover, so the OS already reserves space for the status bar
+     and gesture-nav natively — content starts cleanly below/above them. This is
+     just normal breathing room, not a manual status-bar-height guess. */
   .gate{
     flex:1; min-height:0; overflow-y:auto; display:flex; flex-direction:column; justify-content:center;
-    padding-top: max(44px, calc(env(safe-area-inset-top, 0px) + 20px));
+    padding-top: calc(20px + env(safe-area-inset-top, 0px));
     padding-right: 28px;
-    padding-bottom: max(36px, calc(env(safe-area-inset-bottom, 0px) + 20px));
+    padding-bottom: calc(24px + env(safe-area-inset-bottom, 0px));
     padding-left: 28px;
     background: #F8F8F8;
   }
@@ -196,7 +196,7 @@
   /* ---------- APP SHELL ---------- */
   .app{ flex:1; min-height:0; display:flex; flex-direction:column; }
   .topbar{
-    flex:none; padding-top: max(46px, calc(env(safe-area-inset-top, 0px) + 12px)); padding-right:20px; padding-bottom:14px; padding-left:20px;
+    flex:none; padding-top: calc(12px + env(safe-area-inset-top, 0px)); padding-right:20px; padding-bottom:14px; padding-left:20px;
     display:flex; align-items:center; justify-content:space-between; gap:10px;
     background:var(--glass-bg-strong); border-bottom:1px solid var(--glass-border); position:relative; z-index:20; transition: box-shadow .2s ease, background-color .2s ease;
     backdrop-filter:var(--glass-blur); -webkit-backdrop-filter:var(--glass-blur);
