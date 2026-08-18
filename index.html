@@ -94,7 +94,7 @@
     justify-content:center;
     height:100vh;
     height:100dvh;
-    height:100svh;
+    height:calc(var(--app-vh, 1vh) * 100);
     overflow:hidden;
     -webkit-font-smoothing:antialiased;
     font-feature-settings:"calt";
@@ -110,7 +110,7 @@
     max-width:430px;
     height:100vh;
     height:100dvh;
-    height:100svh;
+    height:calc(var(--app-vh, 1vh) * 100);
     background: var(--mesh-bg);
     box-shadow: var(--shadow-lg);
     display:flex;
@@ -345,6 +345,23 @@
 <div class="frame" id="frame"></div>
 
 <script>
+/* ============================= VIEWPORT HEIGHT ============================= */
+// CSS's own viewport-height units (vh/dvh/svh) turned out inconsistent in
+// practice across this app's real contexts (regular tab vs. installed
+// standalone PWA, with/without on-screen gesture nav) — svh under-shot the
+// true visible height on some Android devices (leaving a gap below the tab
+// bar), while dvh over-shot on others (clipping the tab bar). Measuring
+// window.innerHeight directly in JS and feeding it back in as a CSS custom
+// property is the one approach that tracks the *actual* rendered viewport in
+// every context, same trick used to solve mobile Safari's original 100vh bug.
+function setAppVH(){
+  document.documentElement.style.setProperty('--app-vh', (window.innerHeight * 0.01) + 'px');
+}
+setAppVH();
+window.addEventListener('resize', setAppVH);
+window.addEventListener('orientationchange', setAppVH);
+if(window.visualViewport) window.visualViewport.addEventListener('resize', setAppVH);
+
 /* ============================= CONSTANTS ============================= */
 const CATEGORIES = [
   {id:'food', label:'Food & Groceries', icon:'🍽️'},
