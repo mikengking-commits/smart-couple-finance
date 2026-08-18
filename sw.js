@@ -1,11 +1,12 @@
-const CACHE_NAME = 'scf-shell-v1';
+const CACHE_NAME = 'scf-shell-v2';
 const SHELL_FILES = [
   './',
   './index.html',
   './manifest.json',
   './icon-180.png',
   './icon-192.png',
-  './icon-512.png'
+  './icon-512.png',
+  './globe.mp4'
 ];
 
 self.addEventListener('install', (event) => {

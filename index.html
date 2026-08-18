@@ -104,17 +104,19 @@
   .mono{ font-family:var(--font-display); font-weight:600; font-variant-numeric: tabular-nums; }
   i[data-lucide]{ display:inline-block; vertical-align:-3px; }
   /* ---------- GATE / SETUP ---------- */
-  .gate{ flex:1; min-height:0; overflow-y:auto; display:flex; flex-direction:column; justify-content:center; padding: calc(28px + env(safe-area-inset-top, 0px)) 28px calc(36px + env(safe-area-inset-bottom, 0px)); background: var(--mesh-bg); }
+  /* Matches the globe video's own baked-in background (sampled ~#F8F8F8) so the
+     video's edges disappear into the page instead of reading as a white box. */
+  .gate{ flex:1; min-height:0; overflow-y:auto; display:flex; flex-direction:column; justify-content:center; padding: calc(28px + env(safe-area-inset-top, 0px)) 28px calc(36px + env(safe-area-inset-bottom, 0px)); background: #F8F8F8; }
 
   /* ---------- GATE WELCOME: orbiting-coin hero ---------- */
   @keyframes orbit{ from{ transform:rotate(0deg); } to{ transform:rotate(360deg); } }
   @keyframes orbitCounter{ from{ transform:rotate(0deg); } to{ transform:rotate(-360deg); } }
   @keyframes heroIn{ from{ opacity:0; transform:translateY(22px) scale(.96); } to{ opacity:1; transform:translateY(0) scale(1); } }
-  .hero-orbit{ position:relative; width:180px; height:150px; margin:0 auto 28px; animation:heroIn 700ms cubic-bezier(.2,0,.2,1) both; }
-  .hero-orbit .ring{ position:absolute; inset:0; }
-  .hero-orbit .coin-1{ position:absolute; top:6px; left:66px; width:48px; height:48px; border-radius:999px; background:var(--accent-orange); }
-  .hero-orbit .coin-2{ position:absolute; bottom:2px; right:10px; width:34px; height:34px; border-radius:999px; background:var(--accent-cyan); }
-  .hero-orbit .core{ position:absolute; top:50%; left:50%; width:118px; height:118px; margin:-59px 0 0 -59px; border-radius:999px; background:var(--green); display:flex; align-items:center; justify-content:center; color:var(--on-green); }
+  @keyframes staggerUp{ from{ opacity:0; transform:translateY(16px); } to{ opacity:1; transform:translateY(0); } }
+  @keyframes confettiFall{ from{ transform:translateY(-40px) rotate(0deg); opacity:1; } to{ transform:translateY(620px) rotate(540deg); opacity:0; } }
+  @keyframes celebrateIn{ from{ opacity:0; transform:scale(.92); } to{ opacity:1; transform:scale(1); } }
+  @keyframes pullSpin{ to{ transform:rotate(360deg); } }
+  .hero-video{ display:block; width:100%; max-width:260px; height:auto; margin:0 auto 28px; animation:heroIn 700ms cubic-bezier(.2,0,.2,1) both; background:#F8F8F8; }
   .gate h1{ font-size:34px; font-weight:900; margin:0 0 8px; color:var(--ink); letter-spacing:-0.02em; }
   .gate p.sub{ margin:0 0 28px; color:var(--body); font-size:15px; line-height:1.5; max-width:340px; text-wrap:pretty; }
   label{ display:block; font-size:14px; font-weight:600; color:var(--ink); margin-bottom:8px; }
@@ -237,7 +239,7 @@
     padding:8px 8px calc(8px + env(safe-area-inset-bottom, 0px));
     background:var(--canvas-soft); z-index:20;
   }
-  .tab-indicator{ position:absolute; top:6px; width:20%; height:52px; transition:left 380ms cubic-bezier(.34,1.56,.64,1); display:flex; align-items:center; justify-content:center; pointer-events:none; }
+  .tab-indicator{ position:absolute; top:6px; height:52px; transition:left .38s cubic-bezier(.34,1.56,.64,1), width .38s cubic-bezier(.34,1.56,.64,1); display:flex; align-items:center; justify-content:center; pointer-events:none; }
   .tab-indicator .pill{ width:44px; height:44px; border-radius:999px; background:var(--green-pale); }
   .tab{ position:relative; flex:1; display:flex; flex-direction:column; align-items:center; gap:3px; background:none; border:none; cursor:pointer; color:var(--mute); padding:6px 2px; z-index:1; }
   .tab.active{ color:var(--ink); font-weight:600; }
@@ -256,8 +258,17 @@
   @keyframes backdropOut{ from{opacity:1;} to{opacity:0;} }
   @keyframes sheetIn{ from{transform:translateY(100%);} to{transform:translateY(0);} }
   @keyframes sheetOut{ from{transform:translateY(0); opacity:1;} to{transform:translateY(40px); opacity:0;} }
-  @keyframes contentEnter{ from{opacity:0; transform:translateY(8px);} to{opacity:1; transform:translateY(0);} }
-  .content.enter{ animation: contentEnter .24s ease; }
+  /* Per-child staggered entrance. render() does a full innerHTML replace on every
+     tab/screen switch, so these are always fresh elements — the animation replays
+     automatically whenever .enter is present at creation time, no JS retrigger needed. */
+  .content.enter > *{ animation: staggerUp 420ms cubic-bezier(.2,0,.2,1) both; }
+  .content.enter > *:nth-child(1){ animation-delay: 0ms; }
+  .content.enter > *:nth-child(2){ animation-delay: 50ms; }
+  .content.enter > *:nth-child(3){ animation-delay: 100ms; }
+  .content.enter > *:nth-child(4){ animation-delay: 150ms; }
+  .content.enter > *:nth-child(5){ animation-delay: 200ms; }
+  .content.enter > *:nth-child(6){ animation-delay: 250ms; }
+  .content.enter > *:nth-child(n+7){ animation-delay: 300ms; }
   .topbar.scrolled{ box-shadow: 0 4px 18px rgba(14,15,12,0.08); }
 
   .btn{ position:relative; }
@@ -298,6 +309,12 @@
   .confirm-box{ background:var(--canvas); border-radius:var(--radius-lg); padding:22px 20px; width:100%; max-width:360px; box-shadow:var(--shadow-lg); }
   .confirm-box p{ font-size:14.5px; line-height:1.5; margin:0 0 18px; color:var(--ink); }
   .confirm-box .row{ display:flex; gap:10px; }
+
+  .celebrate-overlay{ position:fixed; inset:0; background:var(--canvas); z-index:250; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:40px 28px; text-align:center; animation:celebrateIn 260ms ease; overflow:hidden; }
+  .celebrate-check{ width:72px; height:72px; border-radius:999px; background:var(--green-pale); color:var(--positive-deep); display:flex; align-items:center; justify-content:center; margin-bottom:22px; position:relative; z-index:1; }
+  .celebrate-title{ font-weight:900; font-size:32px; letter-spacing:-.02em; color:var(--ink); margin:0 0 10px; position:relative; z-index:1; }
+  .celebrate-sub{ margin:0 0 28px; font-size:15px; line-height:1.5; color:var(--body); position:relative; z-index:1; max-width:320px; }
+  .celebrate-overlay .btn{ max-width:220px; }
 </style>
 </head>
 <body>
@@ -372,6 +389,33 @@ function showConfirm(message, onConfirm, confirmLabel){
   overlay.querySelector('#confirmCancelBtn').onclick = ()=>overlay.remove();
   overlay.querySelector('#confirmOkBtn').onclick = ()=>{ overlay.remove(); onConfirm(); };
 }
+// Full-screen goal-completion celebration. Lives outside the normal render() cycle
+// (appended straight to document.body), same as toasts/confirm — so it survives
+// whatever re-render the triggering action causes.
+function showCelebration(message){
+  const overlay = document.createElement('div');
+  overlay.className = 'celebrate-overlay';
+  const colors = ['var(--green)', '#38C8FF', '#FFC091', 'var(--ink)'];
+  const pieces = Array.from({length: 22}, (_,i)=>{
+    const left = Math.round(Math.random()*94);
+    const w = 6 + Math.round(Math.random()*6);
+    const h = 10 + Math.round(Math.random()*10);
+    const radius = Math.random()>0.5 ? '2px' : '999px';
+    const color = colors[i % colors.length];
+    const duration = 1400 + Math.round(Math.random()*900);
+    const delay = Math.round(Math.random()*300);
+    return `<div style="position:absolute; top:0; left:${left}%; width:${w}px; height:${h}px; background:${color}; border-radius:${radius}; animation:confettiFall ${duration}ms linear ${delay}ms both;"></div>`;
+  }).join('');
+  overlay.innerHTML = `
+    ${pieces}
+    <div class="celebrate-check">${ic('check',34)}</div>
+    <h1 class="celebrate-title">Goal reached.</h1>
+    <p class="celebrate-sub">${message}</p>
+    <button class="btn" id="celebrateDoneBtn">Done</button>`;
+  document.body.appendChild(overlay);
+  if(window.lucide) window.lucide.createIcons();
+  overlay.querySelector('#celebrateDoneBtn').onclick = ()=>overlay.remove();
+}
 // Named wrappers for destructive actions. Building the confirm message as an
 // inline JS string inside an onclick="..." attribute is fragile — an apostrophe
 // in the message (e.g. "can't") terminates the attribute's inner string early
@@ -406,6 +450,8 @@ let state = {
   goalDraft: {},
   viewMonth: (()=>{ const n = new Date(); return {year:n.getFullYear(), month:n.getMonth()}; })(),
   txnSearch: '',
+  animateContent: false,
+  pull: {dragging:false, startY:0, dist:0, refreshing:false},
 };
 
 function defaultData(){
@@ -847,11 +893,17 @@ async function submitContribution(goalId, form, btn){
   setBtnLoading(btn, true);
   const g = state.data.goals.find(g=>g.id===goalId);
   if(!g) return;
+  const wasComplete = (g.currentAmount||0) >= g.targetAmount;
   const newAmount = (g.currentAmount||0) + add;
+  const nowComplete = newAmount >= g.targetAmount;
   try{ await hhDoc(state.code).collection('goals').doc(goalId).update({currentAmount: newAmount}); }
   catch(e){ console.error('contribution failed', e); saveFailAlert('add those funds'); setBtnLoading(btn, false); return; }
-  showToast('Funds added', 'success');
   closeModal();
+  if(nowComplete && !wasComplete){
+    showCelebration(`That's ${fmt(add, g.currency)} added to "${g.title}." Just like that.`);
+  } else {
+    showToast('Funds added', 'success');
+  }
 }
 async function submitBudget(form, btn){
   const limit = parseFloat(form.limit.value);
@@ -894,16 +946,14 @@ function renderGate(){
   if(!state.gateMode){
     return `
     <div class="gate">
-      <div class="hero-orbit">
-        <div class="ring" style="animation:orbit 16s linear infinite;"><div class="coin-1"></div></div>
-        <div class="ring" style="animation:orbit 22s linear infinite reverse;"><div class="coin-2"></div></div>
-        <div class="core"><div style="position:absolute;inset:0;animation:orbitCounter 30s linear infinite;">${ic('banknote',20)}</div>${ic('wallet',38)}</div>
+      <video class="hero-video" src="globe.mp4" autoplay muted loop playsinline disablepictureinpicture aria-hidden="true"></video>
+      <h1 style="text-align:center; animation:heroIn 700ms cubic-bezier(.2,0,.2,1) 80ms both;">Smart Couple Financial</h1>
+      <p class="sub" style="text-align:center; margin-left:auto; margin-right:auto; animation:heroIn 700ms cubic-bezier(.2,0,.2,1) 140ms both;">A shared money space for two — built for Filipino couples and OFW families juggling more than one currency.</p>
+      <div style="animation:heroIn 700ms cubic-bezier(.2,0,.2,1) 200ms both;">
+        <button class="btn" onclick="setGateMode('login')">Log in to our household</button>
+        <div style="height:12px;"></div>
+        <button class="btn ghost" onclick="setGateMode('create')">Start a new household</button>
       </div>
-      <h1 style="text-align:center;">Smart Couple Financial</h1>
-      <p class="sub" style="text-align:center; margin-left:auto; margin-right:auto;">A shared money space for two — built for Filipino couples and OFW families juggling more than one currency.</p>
-      <button class="btn" onclick="setGateMode('login')">Log in to our household</button>
-      <div style="height:12px;"></div>
-      <button class="btn ghost" onclick="setGateMode('create')">Start a new household</button>
     </div>`;
   }
 
@@ -944,7 +994,7 @@ async function handleGateSubmit(btn){
       setBtnLoading(btn, false);
       return;
     }
-    state.code = val; state.data = existing; state.screen='app';
+    state.code = val; state.data = existing; state.screen='app'; state.animateContent = true;
     subscribeToHousehold(val); startRateAutoRefresh();
   } else {
     if(existing){
@@ -984,6 +1034,7 @@ async function handleSetupSubmit(btn){
   try{ await createHousehold(state.code, state.data); }
   catch(e){ console.error('create household failed', e); saveFailAlert('create your household'); setBtnLoading(btn, false); return; }
   state.screen='app';
+  state.animateContent = true;
   subscribeToHousehold(state.code);
   startRateAutoRefresh();
   render();
@@ -998,7 +1049,6 @@ function renderApp(){
     {id:'budget', ic:'wallet', lb:'Budget'},
     {id:'settings', ic:'settings', lb:'Settings'}
   ];
-  const activeIdx = Math.max(0, tabs.findIndex(t=>t.id===state.tab));
   const entranceClass = state.animateContent ? ' enter' : '';
   state.animateContent = false;
   return `
@@ -1010,7 +1060,7 @@ function renderApp(){
     <main class="content${entranceClass}">${renderTabContent()}</main>
     ${(state.tab==='transactions'||state.tab==='goals'||state.tab==='budget') ? `<button class="fab" onclick="openModal('${fabType()}')" aria-label="Add ${fabType()==='txn'?'transaction':fabType()}">+</button>` : ''}
     <nav class="tabbar" aria-label="Main">
-      <div class="tab-indicator" style="left:${activeIdx*20}%;"><div class="pill"></div></div>
+      <div class="tab-indicator" id="tabIndicator"><div class="pill"></div></div>
       ${tabs.map(t=>`<button class="tab ${state.tab===t.id?'active':''}" onclick="switchTab('${t.id}')" ${state.tab===t.id?'aria-current="page"':''}><span class="ic">${ic(t.ic,20)}</span><span class="lb">${t.lb}</span></button>`).join('')}
     </nav>
   </div>
@@ -1054,6 +1104,9 @@ function renderDashboard(){
   }
 
   return `
+    <div class="pull-indicator" style="height:${state.pull.dist}px; animation:none; display:flex; align-items:center; justify-content:center; overflow:hidden; transition:height 200ms cubic-bezier(.2,0,.2,1);">
+      <span style="display:inline-flex; transform:rotate(${state.pull.refreshing?0:Math.min(360,state.pull.dist*4)}deg); animation:${state.pull.refreshing?'pullSpin 700ms linear infinite':'none'}; color:var(--ink);">${ic('refresh-cw',18)}</span>
+    </div>
     <div class="balance-hero">
       <div class="lbl">This month, together</div>
       <div class="amt mono">${fmt(totals.net, s.baseCurrency)}</div>
@@ -2223,7 +2276,29 @@ function render(){
   else if(state.screen==='setup') frame.innerHTML = renderSetup();
   else { frame.innerHTML = renderApp(); attachContentScrollListener(); }
   if(window.lucide) window.lucide.createIcons();
+  positionTabIndicator();
+  // Elements inserted via innerHTML don't reliably honor the bare `autoplay`
+  // attribute in every browser engine — calling .play() explicitly is the
+  // robust way to actually start a dynamically-inserted <video>.
+  const heroVideo = frame.querySelector('.hero-video');
+  if(heroVideo) heroVideo.play().catch(()=>{});
 }
+// Measures the active tab button's real position/width so the pill indicator can
+// slide to it precisely — a fixed 20%-per-tab split breaks the moment tab widths
+// vary (long labels, different viewport sizes), so this reads the actual DOM rect.
+function positionTabIndicator(){
+  requestAnimationFrame(()=>{
+    const nav = document.querySelector('.tabbar');
+    const active = nav && nav.querySelector('.tab.active');
+    const indicator = document.getElementById('tabIndicator');
+    if(!nav || !active || !indicator) return;
+    const navRect = nav.getBoundingClientRect();
+    const btnRect = active.getBoundingClientRect();
+    indicator.style.left = (btnRect.left - navRect.left) + 'px';
+    indicator.style.width = btnRect.width + 'px';
+  });
+}
+window.addEventListener('resize', positionTabIndicator);
 function attachContentScrollListener(){
   const content = document.querySelector('.content');
   const topbar = document.querySelector('.topbar');
@@ -2231,6 +2306,48 @@ function attachContentScrollListener(){
   content.addEventListener('scroll', ()=>{
     topbar.classList.toggle('scrolled', content.scrollTop > 4);
   }, {passive:true});
+  if(state.tab === 'dashboard'){
+    content.addEventListener('pointerdown', onPullStart);
+    content.addEventListener('pointermove', onPullMove);
+    content.addEventListener('pointerup', onPullEnd);
+    content.addEventListener('pointercancel', onPullEnd);
+  }
+}
+/* ---------- Pull-to-refresh (dashboard only) ---------- */
+function onPullStart(e){
+  if(state.tab!=='dashboard') return;
+  if(e.currentTarget.scrollTop>0) return;
+  state.pull.dragging=true; state.pull.startY=e.clientY; state.pull.dist=0;
+}
+function onPullMove(e){
+  if(!state.pull.dragging) return;
+  const dy = e.clientY - state.pull.startY;
+  state.pull.dist = dy<=0 ? 0 : Math.min(80, dy*0.5);
+  renderPullOnly();
+}
+function onPullEnd(){
+  if(!state.pull.dragging) return;
+  state.pull.dragging=false;
+  if(state.pull.dist>46){
+    state.pull.dist=56; state.pull.refreshing=true; renderPullOnly();
+    fetchRates().then(()=>{
+      state.pull.dist=0; state.pull.refreshing=false;
+      render();
+      showToast('Rates refreshed', 'success');
+    });
+  } else {
+    state.pull.dist=0; renderPullOnly();
+  }
+}
+function renderPullOnly(){
+  const el = document.querySelector('.pull-indicator');
+  if(!el) return;
+  el.style.height = state.pull.dist+'px';
+  const icon = el.querySelector('span');
+  if(icon){
+    icon.style.animation = state.pull.refreshing ? 'pullSpin 700ms linear infinite' : 'none';
+    icon.style.transform = state.pull.refreshing ? 'rotate(0deg)' : `rotate(${Math.min(360, state.pull.dist*4)}deg)`;
+  }
 }
 // A subtle haptic tick on supported (mainly Android) devices when tapping
 // anything button-like — iOS Safari just silently ignores this, no harm done.
